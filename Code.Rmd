@@ -1,0 +1,312 @@
+---
+title: "projetSimulation"
+author: "Yesmine Bellalah"
+date: "22 avril 2017"
+output: html_document
+---
+
+##Méthode par le schéma d'Euler
+
+#Declaration des variables
+
+#Question 1
+```{r}
+
+x0=0
+sigma=0.5
+k=1
+T=1
+n=10
+delta= T/n
+t= k/10
+deltaX=c(rep(0,n+1))
+
+g=function(x){
+  
+gx=max(exp(x)-k,0)
+return(gx)
+}
+
+mu=function(x)
+{
+  ux=0.1*(sqrt(exp(x))-1)-1/8
+  return(ux)
+  
+}
+
+
+```
+
+
+```{r}
+#simulation de W mouvement brownien
+
+W = rnorm(1000,sd=sqrt(0.1))
+dW=cumsum(W )
+
+temps1=Sys.time()
+
+X<-c(rep(0,11))
+X[0]=0
+for (j in 1:11){
+ 
+
+ X[j+1]=X[j]+delta*mu(X[j])+sigma*(dW[j+1]-dW[j])
+}
+ 
+
+
+
+#simuler V 
+V1=c((rep(0,11)))
+for (i in 0:11){
+V1[i]=max(g(X[i]),0)
+}
+V=mean(V1)
+V
+
+# Variance
+var1=sd(V1)*sd(V1)
+var1
+
+#Temps d'éxecution
+t1= Sys.time()-temps1
+
+```
+
+#Question2
+
+```{r}
+temps2=Sys.time()
+
+Xt1=c(rep(0,11))
+Xt2=c(rep(0,11))
+X1<-c(rep(0,11))
+X2<-c(rep(0,11))
+
+X1[0]=0
+X2[0]=0
+
+for(j in 1 :11){
+
+  X1[j+1]=X1[j]+delta*mu(X1[j])+sigma*(dW[j+1]-dW[j])
+  X2[j+1]=X2[j]+delta*mu(X2[j])-sigma*(dW[j+1]-dW[j])
+ }
+
+X2
+
+
+Vt1=c(rep(0,11))
+Vt2=c(rep(0,11))
+for (i in 0:11){
+Vt1[i]=max(g(X1[i]),0)
+}
+for (i in 0:11){
+Vt2[i]=max(g(X2[i]),0)
+}
+
+G=0.5*(Vt1+Vt2 )
+ G
+V2=mean(G)
+
+
+#variance
+var2=sd(G)*sd(G )
+var2
+
+t2=Sys.time()-temps2
+var1
+
+```
+
+#Question3
+
+```{r}
+
+temps3=Sys.time()
+#Xt3 
+Xt3=c(rep(0,11))
+
+X3<-c(rep(0,11))
+
+X3[0]=0
+for(j in 1 :11)
+ {
+  X3[j+1]=X3[j]+delta*mu(X3[j])+sigma*(dW[j+1]-dW[j])
+ 
+}
+
+X3
+
+Vt3=c(rep(0,11))
+for (i in 0:11){
+Vt3[i]=max(g(X3[i]),0)
+}
+Vt3
+
+
+#Variable de controle
+
+
+Xttild=c(rep(0,11))
+for(i in 0:11){
+  Xttild[i]= sigma*dW[i]
+}
+Xttild
+Xtild=c(rep(0,11)) 
+for (i in 0:11){
+ Xtild[i]=max(exp( Xttild[i])-1,0)
+}
+
+Xtild
+m=mean(Xtild)
+m
+#methode de controle
+
+alpha=cov(Xtild,Vt3)/var(Xtild)
+alpha
+
+Y=Vt3-alpha*(Xtild-m)
+Y
+
+Ym=mean(Y)
+Ym
+var3=var(Y)
+var3
+t3=Sys.time()- temps3
+var2
+```
+
+
+
+#2eme partie 
+
+
+
+
+
+```{r}
+temps4=Sys.time()
+Mc=100
+Beta=6
+U=runif(Mc)
+E=-log(1-U)/Beta
+
+
+
+   
+
+
+```
+
+
+```{r}
+#génerer T
+
+Tc=c(rep(0,Mc+1))
+
+
+j=1
+c=0
+
+Tk1=c(rep(0,11))
+
+ while((c < 1) ){
+  c=c+E[j]
+ Tk1[j]=c 
+ j=j+1
+     
+    }
+  
+ Tk1 
+ c
+```
+
+```{r}
+ 
+if (c>=1){
+Tk1[j-1]=1}
+T=Tk1[1:j]
+Nt=j-1   
+
+T
+
+Nt
+```
+```{r}
+# génerer les delta T
+
+Y=c(rep(0,Nt))
+for  (i in 1 : Nt){
+    Y[i]=T[i+1]-T[i]}
+Y
+```
+
+
+```{r}
+
+# Génerer les X chapeau
+
+
+Xchap_T=c(rep(0,11))
+Xchap=c(rep(0,11))
+
+for (j in 1:(Nt-1)){
+ 
+
+Xchap[j+1]=Xchap[j]+Y[j+1]*mu(Xchap[j])+sigma*(dW[j+1]-dW[j])
+}
+ 
+
+
+ 
+
+Xchap
+
+Xchap
+
+
+
+```
+
+
+
+```{r}
+
+# génerer psi
+
+
+
+p=1 
+for (i in 2:(Nt-1)) {p=p*(mu(Xchap[i])-mu(Xchap[i-1]))*(dW[i+1]-dW[i])/(0.5*Beta*Y[i+1])}
+p
+ 
+z=1
+
+for (i in 2:(Nt-1)) {
+z=p*(exp(Beta*T)*( g(Xchap[i])-g(Xchap[i-1])))
+}
+
+V_chap=mean(z)
+
+var_chap=var(z)
+t4=Sys.time()- temps4
+
+```
+
+
+```{r}
+
+E=c(V,V2,Ym,v_chap)
+Var=c(var1, var2 ,var3 ,var_chap)
+temps=c(t1,t2,t3,t4)
+tabl<-cbind(E ,Var,temps)
+rownames(tabl)<-c("Monte Carlo classique" , "Antithétique", "Métode de controle" ,"schema Sans Biais :Monte-Carlo simple")
+
+tabl
+
+
+
+```
+
+
